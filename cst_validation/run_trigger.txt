@@ -1,2 +1,2 @@
-trigger: 2026-09-15T06:16:30Z
-purpose: retry IBM XXZ Zenodo CST validation after workflow setup fix
+trigger: 2026-09-15T06:19:30Z
+purpose: rerun CST on XXZ_12_periodic_z with exact paper preprocessing

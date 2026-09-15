@@ -1,0 +1,71 @@
+name: CST real-data validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - cst-realdata-validation
+    paths:
+      - cst_validation/run_trigger.txt
+
+permissions:
+  contents: read
+
+jobs:
+  validate-ibm-xxz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout validation branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install analysis dependencies
+        run: python -m pip install --upgrade pip numpy pandas
+
+      - name: Download published IBM XXZ data and run CST
+        run: |
+          mkdir -p work
+          python cst_validation/run_ibm_cst.py \
+            --root work/ibm_xxz_zenodo \
+            --output work/cst_results \
+            --top 16
+
+      - name: Print candidate and validation summaries
+        if: always()
+        run: |
+          echo '=== candidate_distributions.csv ==='
+          test -f work/cst_results/candidate_distributions.csv && cat work/cst_results/candidate_distributions.csv || true
+          echo '=== validation_summary.csv ==='
+          test -f work/cst_results/validation_summary.csv && cat work/cst_results/validation_summary.csv || true
+          echo '=== run_manifest.json ==='
+          test -f work/cst_results/run_manifest.json && cat work/cst_results/run_manifest.json || true
+
+      - name: Upload CST analysis artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cst-ibm-xxz-results
+          path: |
+            work/cst_results
+            work/ibm_xxz_zenodo/zenodo_record.json
+            work/ibm_xxz_zenodo/download_manifest.csv
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload source data snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cst-ibm-xxz-source-data
+          path: |
+            work/ibm_xxz_zenodo/downloads
+            work/ibm_xxz_zenodo/extracted
+          if-no-files-found: warn
+          compression-level: 6
+          retention-days: 7

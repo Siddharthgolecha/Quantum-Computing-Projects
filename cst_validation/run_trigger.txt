@@ -1,0 +1,2 @@
+trigger: 2026-09-15T06:20:00Z
+purpose: download IBM XXZ Zenodo record 17291855 and run CST real-data validation
